@@ -18,12 +18,18 @@ class JenkinsJobManager {
     Boolean noDelete = false
     Boolean startOnCreate = false
 
+    String[] booleanOpts = [ "dryRun", "noViews", "noDelete", "startOnCreate" ]
+
     JenkinsApi jenkinsApi
     GitApi gitApi
 
     JenkinsJobManager(Map props) {
         for (property in props) {
-            this."${property.key}" = property.value
+            if (property.key in booleanOpts) {
+                this."${property.key}" = property.value.toBoolean()
+            } else {
+                this."${property.key}" = property.value
+            }
         }
         initJenkinsApi()
         initGitApi()
