@@ -94,8 +94,11 @@ class JenkinsJobManager {
         List<String> templateJobNames = templateJobs.jobName
         List<String> templateBaseJobNames = templateJobs.baseJobName
 
+	// Filter out jobs that do not match the prefix-.*-branch pattern
+	List<String> managedJobNames = allJobNames.findResults { String jobName ->
+		jobName.find(/^($templateJobPrefix-[^-]*)-(\w+)$/) { name, base, branch -> name } };
         // don't want actual template jobs, just the jobs that were created from the templates
-        return (allJobNames - templateJobNames).findAll { String jobName ->
+        return (managedJobNames - templateJobNames).findAll { String jobName ->
             templateBaseJobNames.find { String baseJobName -> jobName.startsWith(baseJobName)}
         }
     }
