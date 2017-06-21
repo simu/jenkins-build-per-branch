@@ -52,8 +52,8 @@ class JenkinsJobManager {
     }
 
     public void syncJobs(List<String> allBranchNames, List<String> allJobNames, List<TemplateJob> templateJobs) {
-        List<String> currentTemplateDrivenJobNames = templateDrivenJobNames(templateJobs, allJobNames)
         List<String> nonTemplateBranchNames = allBranchNames - templateBranchName
+        List<String> currentTemplateDrivenJobNames = templateDrivenJobNames(templateJobs, allJobNames, nonTemplateBranchNames)
         List<ConcreteJob> expectedJobs = this.expectedJobs(templateJobs, nonTemplateBranchNames)
 
         createMissingJobs(expectedJobs, currentTemplateDrivenJobNames, templateJobs)
@@ -90,13 +90,15 @@ class JenkinsJobManager {
         }.flatten()
     }
 
-    public List<String> templateDrivenJobNames(List<TemplateJob> templateJobs, List<String> allJobNames) {
+    public List<String> templateDrivenJobNames(List<TemplateJob> templateJobs, List<String> allJobNames, List<String>nonTemplateBranchNames) {
         List<String> templateJobNames = templateJobs.jobName
         List<String> templateBaseJobNames = templateJobs.baseJobName
 
 	// Filter out jobs that do not match the prefix-.*-branch pattern
+	String branchRegex=nonTemplateBranchNames.join('|');
+	println "branchRegex: (${branchRegex})"
 	List<String> managedJobNames = allJobNames.findResults { String jobName ->
-		jobName.find(/^($templateJobPrefix-[^-]*)-(\w+)$/) { name, base, branch -> name } };
+		jobName.find(/^($templateJobPrefix-[^-]*)-($branchRegex)$/) { name, base, branch -> name } };
         // don't want actual template jobs, just the jobs that were created from the templates
         return (managedJobNames - templateJobNames).findAll { String jobName ->
             templateBaseJobNames.find { String baseJobName -> jobName.startsWith(baseJobName)}
