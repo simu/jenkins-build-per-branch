@@ -9,6 +9,7 @@ class JenkinsJobManager {
     String nestedView
     String jenkinsUrl
     String branchNameRegex
+    String branchName
     String viewRegex
     String jenkinsUser
     String jenkinsPassword
@@ -57,6 +58,10 @@ class JenkinsJobManager {
         List<ConcreteJob> expectedJobs = this.expectedJobs(templateJobs, nonTemplateBranchNames)
 
         createMissingJobs(expectedJobs, currentTemplateDrivenJobNames, templateJobs)
+
+        println "Find jobs with branch name ${branchName}";
+        nonTemplateBranchNames = nonTemplateBranchNames.plus(branchName);
+        currentTemplateDrivenJobNames = templateDrivenJobNames(templateJobs, allJobNames, nonTemplateBranchNames);
         if (!noDelete) {
             deleteDeprecatedJobs(currentTemplateDrivenJobNames - expectedJobs.jobName)
         }
@@ -94,11 +99,11 @@ class JenkinsJobManager {
         List<String> templateJobNames = templateJobs.jobName
         List<String> templateBaseJobNames = templateJobs.baseJobName
 
-	// Filter out jobs that do not match the prefix-.*-branch pattern
-	String branchRegex=nonTemplateBranchNames.join('|');
-	println "branchRegex: (${branchRegex})"
-	List<String> managedJobNames = allJobNames.findResults { String jobName ->
-		jobName.find(/^($templateJobPrefix-[^-]*)-($branchRegex)$/) { name, base, branch -> name } };
+        // Filter out jobs that do not match the prefix-.*-branch pattern
+        String branchRegex=nonTemplateBranchNames.join('|');
+        println "templateDrivenJobNames: branchRegex: (${branchRegex})";
+        List<String> managedJobNames = allJobNames.findResults { String jobName ->
+            jobName.find(/^($templateJobPrefix-[^-]*)-($branchRegex)$/) { name, base, branch -> name } };
         // don't want actual template jobs, just the jobs that were created from the templates
         return (managedJobNames - templateJobNames).findAll { String jobName ->
             templateBaseJobNames.find { String baseJobName -> jobName.startsWith(baseJobName)}
